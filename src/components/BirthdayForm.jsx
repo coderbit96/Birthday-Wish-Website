@@ -43,6 +43,13 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
   const fileInput = useRef(null)
   const audioInput = useRef(null)
   const selectedColorTheme = getColorTheme(form.color)
+  const progressSteps = [
+    { label: 'Their details', complete: Boolean(form.name.trim()) },
+    { label: 'A photo', complete: form.images.some((image) => Boolean(String(image).trim())) },
+    { label: 'Your message', complete: form.message.trim().length >= 20 },
+    { label: 'Their style', complete: Boolean(form.relationship && form.color) },
+  ]
+  const completion = Math.round((progressSteps.filter((step) => step.complete).length / progressSteps.length) * 100)
 
   const update = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }))
@@ -137,6 +144,10 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
       setError('Add their name to make this wish personal.')
       return
     }
+    if (!form.images.some((image) => Boolean(String(image).trim()))) {
+      setError('Add at least one favorite photo to create their birthday wish.')
+      return
+    }
     if (!form.message.trim()) {
       setError('Write a few words from the heart.')
       return
@@ -191,6 +202,13 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
       className={`form-page form-theme-${form.relationship.toLowerCase()}`}
       style={{ '--form-accent': selectedColorTheme.accent, '--form-gradient': selectedColorTheme.gradient }}
     >
+      <div className="form-ambient" aria-hidden="true">
+        <span style={{ '--i': 0 }}>✦</span>
+        <span style={{ '--i': 1 }}>♡</span>
+        <span style={{ '--i': 2 }}>✦</span>
+        <span style={{ '--i': 3 }}>♥</span>
+        <span style={{ '--i': 4 }}>✦</span>
+      </div>
       <nav className="nav shell form-nav">
         <button className="brand" type="button" onClick={onBack}>
           <span className="brand-mark"><Gift size={19} /></span> wishly<span>.</span>
@@ -204,6 +222,17 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
           <div className="eyebrow"><Sparkles size={14} /> THEIR MOMENT STARTS HERE</div>
           <h1>Let’s make something <em>beautiful.</em></h1>
           <p>A few little details are all it takes to create a birthday surprise that feels completely theirs.</p>
+          <div className="form-live-preview" key={`${form.relationship}-${form.color}`}>
+            <div className="live-preview-topline"><span><i /> LIVE PREVIEW</span><Sparkles size={14} /></div>
+            <div className="live-preview-person">
+              <span className="live-preview-avatar"><Gift size={20} /></span>
+              <p>
+                <small>A birthday moment for</small>
+                <strong>{form.name.trim() || 'someone special'}</strong>
+              </p>
+            </div>
+            <div className="live-preview-theme"><span>{form.relationship}</span><i /><span>{selectedColorTheme.label}</span></div>
+          </div>
           <div className="form-promise">
             <span><Check size={16} /></span>
             <p><strong>Made by you</strong><small>Personal, heartfelt, and one of a kind.</small></p>
@@ -219,10 +248,22 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
           <div className="form-heading">
             <span className="form-icon"><Gift size={21} /></span>
             <div><p>CREATE THEIR WISH</p><h2>Tell us about them</h2></div>
+            <span className="form-ready-badge"><Sparkles size={12} /> {completion}% ready</span>
+          </div>
+
+          <div className="form-progress" aria-label={`Wish completion ${completion}%`}>
+            <div className="form-progress-track"><span style={{ width: `${completion}%` }} /></div>
+            <div className="form-progress-steps">
+              {progressSteps.map((step, index) => (
+                <span className={step.complete ? 'complete' : ''} key={step.label}>
+                  <i>{step.complete ? <Check size={10} /> : index + 1}</i>{step.label}
+                </span>
+              ))}
+            </div>
           </div>
 
           <label className="field-label" htmlFor="person-name">What’s their name? <span>*</span></label>
-          <input id="person-name" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="e.g. Ananya" autoFocus />
+          <input id="person-name" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="e.g. Ananya" />
 
           <fieldset>
             <legend>Who are they to you?</legend>
@@ -236,8 +277,8 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
             <div className="theme-selection-note" key={form.relationship} role="status"><span /> {themeLabels[form.relationship]}</div>
           </fieldset>
 
-          <fieldset>
-            <legend>Add favorite photos <small>(optional, up to 12)</small></legend>
+          <fieldset aria-required="true">
+            <legend>Add favorite photos <span className="required-mark">*</span> <small>(required, up to 12)</small></legend>
             <div className="tab-switcher">
               <button className={imageMode === 'upload' ? 'active' : ''} type="button" onClick={() => setImageMode('upload')}><Upload size={15} /> Upload</button>
               <button className={imageMode === 'url' ? 'active' : ''} type="button" onClick={() => setImageMode('url')}><Image size={15} /> Image URL</button>
@@ -271,7 +312,7 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
 
           <label className="field-label" htmlFor="birthday-message">Your birthday message <span>*</span></label>
           <textarea id="birthday-message" value={form.message} onChange={(e) => update('message', e.target.value)} rows="5" maxLength="320" placeholder="Write something from the heart..." />
-          <div className="character-count">{form.message.length}/320</div>
+          <div className="character-count"><span style={{ width: `${Math.min(100, form.message.length / 3.2)}%` }} /> {form.message.length}/320</div>
 
           <div className="form-options">
             <fieldset>
