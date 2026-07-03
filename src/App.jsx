@@ -98,7 +98,7 @@ function App() {
         })
       } catch (error) {
         if (/client token/i.test(error.message)) {
-          throw new Error('Public sharing needs a connected Vercel Blob store.')
+          throw new Error('Public sharing needs a connected Vercel Blob store.', { cause: error })
         }
         throw error
       }
