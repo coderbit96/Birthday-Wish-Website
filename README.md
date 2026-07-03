@@ -1,6 +1,6 @@
 # Wishly — Birthday Wish Creator
 
-A React website for making personal, animated birthday wishes. Its tiny Node server stores each finished wish behind a private eight-character ID, so the complete page (including uploaded photos and music) can be opened from a short link.
+A React and Vite website for making personal, animated birthday wishes. Vercel Blob stores each finished wish behind a private eight-character ID, so the complete page can be opened from a short public link.
 
 ## Run the project
 
@@ -25,10 +25,10 @@ npm run build
 
 Vite writes the deployable site to the `dist` folder.
 
-Run the production server with:
+Preview the production build locally with:
 
 ```bash
-npm start
+npm run preview
 ```
 
 The deployment requires a connected **public Vercel Blob store**, which automatically supplies `BLOB_READ_WRITE_TOKEN` to the API functions. Set `VITE_PUBLIC_SITE_URL` only if the production domain changes.
@@ -42,4 +42,4 @@ The deployment requires a connected **public Vercel Blob store**, which automati
 - `ConfettiAnimation.jsx` — CSS confetti pieces
 - `SurprisePopup.jsx` — funny birthday surprise modal
 
-Photos and custom music stay in the browser until the creator presses **Copy link** or **Share wish**. At that point, the completed wish is saved on the same Wishly server so the recipient can open it.
+Photos and custom music stay in the browser until the creator presses **Copy link** or **Share wish**. The completed wish is then saved to the connected Vercel Blob store so the recipient can open it.

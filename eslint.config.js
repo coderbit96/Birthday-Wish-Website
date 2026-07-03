@@ -4,9 +4,9 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist', '.wish-data'] },
+  { ignores: ['dist'] },
   {
-    files: ['server.mjs', 'api/**/*.js', 'lib/**/*.mjs'],
+    files: ['api/**/*.js', 'lib/**/*.mjs'],
     languageOptions: { ecmaVersion: 2022, globals: globals.node, sourceType: 'module' },
     rules: { ...js.configs.recommended.rules },
   },

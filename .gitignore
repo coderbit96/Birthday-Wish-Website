@@ -1,7 +1,5 @@
 node_modules/
 dist/
-.wish-data/
-
 *.log
 .env
 .env.*

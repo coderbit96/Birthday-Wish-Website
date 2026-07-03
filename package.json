@@ -4,15 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node server.mjs",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "node server.mjs --production",
-    "start": "node server.mjs --production",
+    "preview": "vite preview",
     "lint": "eslint ."
   },
   "dependencies": {
     "@vercel/blob": "^2.5.0",
-    "express": "^5.1.0",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
