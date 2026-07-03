@@ -321,8 +321,8 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
       const url = await createShareLink()
       await copyText(url)
       showShareStatus('Short wish link copied!')
-    } catch {
-      showShareStatus('Could not create the link. Please try again.')
+    } catch (error) {
+      showShareStatus(error.message || 'Could not create the link. Please try again.')
     } finally {
       setShareBusy(false)
     }
@@ -342,7 +342,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        showShareStatus('Sharing was not available')
+        showShareStatus(error.message || 'Sharing was not available')
       }
     } finally {
       setShareBusy(false)

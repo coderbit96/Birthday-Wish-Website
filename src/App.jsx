@@ -18,6 +18,27 @@ const starterWish = {
 }
 
 const sharedWishId = window.location.hash.match(/^#wish=([A-Za-z0-9_-]{8})$/)?.[1] || ''
+const localHosts = new Set(['localhost', '127.0.0.1', '::1'])
+
+const makeWishId = () => {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'
+  const bytes = window.crypto.getRandomValues(new Uint8Array(8))
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('')
+}
+
+const getShareableWish = (wish) => ({
+  name: wish.name,
+  relationship: wish.relationship,
+  image: wish.image,
+  images: wish.images,
+  message: wish.message,
+  color: wish.color,
+  music: wish.music,
+  musicType: wish.musicType,
+  musicSrc: wish.musicSrc,
+  musicName: wish.musicName,
+  musicUrl: wish.musicUrl,
+})
 
 function App() {
   const [screen, setScreen] = useState(sharedWishId ? 'loading' : 'home')
@@ -60,20 +81,44 @@ function App() {
   const createShareLink = async () => {
     let id = shareId
     if (!id) {
-      const response = await fetch('/api/wishes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(wish),
-      })
+      const shareableWish = getShareableWish(wish)
 
-      if (!response.ok) throw new Error('Could not save wish')
-      const result = await response.json()
-      id = result.id
+      if (localHosts.has(window.location.hostname)) {
+        const response = await fetch('/api/wishes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(shareableWish),
+        })
+
+        const isJson = response.headers.get('content-type')?.includes('application/json')
+        const result = isJson ? await response.json() : null
+        if (!response.ok) {
+          throw new Error(result?.error || 'The sharing server is unavailable. Restart Wishly with npm run dev.')
+        }
+        if (!result || !/^[A-Za-z0-9_-]{8}$/.test(result.id)) {
+          throw new Error('The sharing server is unavailable. Restart Wishly with npm run dev.')
+        }
+        id = result.id
+      } else {
+        const { upload } = await import('@vercel/blob/client')
+        id = makeWishId()
+        const pathname = `wishes/${id}.json`
+        const wishBlob = new Blob([JSON.stringify(shareableWish)], { type: 'application/json' })
+        const result = await upload(pathname, wishBlob, {
+          access: 'public',
+          handleUploadUrl: '/api/wishes/upload',
+          clientPayload: id,
+          multipart: wishBlob.size > 4 * 1024 * 1024,
+        })
+        if (result.pathname !== pathname) throw new Error('The public wish could not be saved. Please try again.')
+      }
+
       setShareId(id)
     }
 
     const url = new URL(import.meta.env.BASE_URL, window.location.origin)
     url.hash = `wish=${id}`
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
     return url.toString()
   }
 
