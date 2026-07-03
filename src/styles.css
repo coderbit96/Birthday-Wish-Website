@@ -1359,6 +1359,9 @@ canvas {
   position: sticky;
   top: 0;
   z-index: 30;
+  width: 100%;
+  max-width: none;
+  padding-inline: max(16px, calc((100% - 1180px) / 2));
   background: color-mix(in srgb, #fffaf7 82%, transparent);
   backdrop-filter: blur(16px);
   box-shadow: 0 1px 0 rgba(128, 91, 102, .08);
