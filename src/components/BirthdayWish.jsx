@@ -296,24 +296,57 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
   }
 
   const copyText = async (text) => {
+    // Android clipboard services often reject very large self-contained wish URLs.
+    // In that case, keep the URL visible and use the native Share button instead.
+    if (text.length > 100000 && navigator.share) return false
+
     if (navigator.clipboard?.writeText) {
       try {
         await navigator.clipboard.writeText(text)
-        return
+        return true
       } catch {
         // Fall back to the older copy command when clipboard permission is unavailable.
       }
     }
 
-    const textArea = document.createElement('textarea')
-    textArea.value = text
-    textArea.style.position = 'fixed'
-    textArea.style.opacity = '0'
-    document.body.appendChild(textArea)
-    textArea.select()
-    const copied = document.execCommand('copy')
-    textArea.remove()
-    if (!copied) throw new Error('Copy failed')
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.readOnly = true
+      textArea.style.position = 'fixed'
+      textArea.style.top = '0'
+      textArea.style.left = '-9999px'
+      textArea.style.fontSize = '16px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      textArea.setSelectionRange(0, text.length)
+      const copied = document.execCommand('copy')
+      textArea.remove()
+      return copied
+    } catch {
+      return false
+    }
+  }
+
+  const copyGeneratedLink = async (url = generatedLink) => {
+    const copied = await copyText(url)
+    showShareStatus(copied ? 'Wish link copied!' : 'Clipboard blocked — tap Share instead.')
+    return copied
+  }
+
+  const shareGeneratedLink = async (url = generatedLink) => {
+    if (!url) return
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `A birthday wish for ${details.name}`, url })
+        showShareStatus('Share menu opened!')
+        return
+      } catch (error) {
+        if (error.name === 'AbortError') return
+      }
+    }
+    await copyGeneratedLink(url)
   }
 
   const copyWishLink = async () => {
@@ -321,8 +354,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
     try {
       const url = await createShareLink()
       setGeneratedLink(url)
-      await copyText(url)
-      showShareStatus('Short wish link copied!')
+      await copyGeneratedLink(url)
     } catch (error) {
       showShareStatus(error.message || 'Could not create the link. Please try again.')
     } finally {
@@ -340,8 +372,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
         await navigator.share({ title: `A birthday wish for ${details.name}`, text: shareText, url })
         showShareStatus('Wish shared!')
       } else {
-        await copyText(url)
-        showShareStatus('Short wish link copied!')
+        await copyGeneratedLink(url)
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -508,7 +539,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
           <h2>Here’s to all the magic<br /><em>still to come.</em></h2>
           <p>Happy birthday, {details.name}. {profile.closing}</p>
           <div className="closing-actions">
-            <button className="button closing-share" type="button" onClick={copyWishLink} disabled={shareBusy}><Copy size={17} /> {shareBusy ? 'Preparing link...' : 'Copy wish link'}</button>
+            <button className="button closing-share" type="button" onClick={shareWish} disabled={shareBusy}><Share2 size={17} /> {shareBusy ? 'Preparing link...' : 'Share this wish'}</button>
             <button className="button closing-replay" type="button" onClick={replay}><Play size={15} fill="currentColor" /> Watch again</button>
           </div>
           <div className="closing-heart"><i /><Heart size={18} fill="currentColor" /><i /></div>
@@ -521,7 +552,8 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
           <div className="share-result-heading"><span><Check size={15} /> Share link ready</span><button type="button" onClick={() => setGeneratedLink('')} aria-label="Close share link"><X size={15} /></button></div>
           <div className="share-result-row">
             <input value={generatedLink} readOnly onFocus={(event) => event.target.select()} aria-label="Generated wish link" />
-            <button type="button" onClick={() => copyText(generatedLink).then(() => showShareStatus('Wish link copied!'))}><Copy size={15} /> Copy</button>
+            <button type="button" onClick={() => copyGeneratedLink()}><Copy size={15} /> Copy</button>
+            <button className="share-now" type="button" onClick={() => shareGeneratedLink()}><Share2 size={15} /> Share</button>
             <a href={generatedLink} target="_blank" rel="noreferrer" aria-label="Open wish link"><ExternalLink size={15} /></a>
           </div>
         </aside>
