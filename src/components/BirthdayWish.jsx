@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowLeft, Check, Gift, Heart, Pencil, Play, Share2, Sparkles, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDown, ArrowLeft, Check, Copy, Gift, Heart, Pencil, Play, Share2, Sparkles, Volume2, VolumeX } from 'lucide-react'
 import ConfettiAnimation from './ConfettiAnimation'
 import SurprisePopup from './SurprisePopup'
 import { getColorTheme } from '../themeOptions'
@@ -124,13 +124,14 @@ function getYouTubeVideoId(value) {
   }
 }
 
-function BirthdayWish({ details, onEdit, onHome }) {
+function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
   const [replayKey, setReplayKey] = useState(0)
   const [showSurprise, setShowSurprise] = useState(false)
   const [intro, setIntro] = useState(true)
   const [typedMessage, setTypedMessage] = useState('')
   const [musicOn, setMusicOn] = useState(false)
   const [shareStatus, setShareStatus] = useState('')
+  const [shareBusy, setShareBusy] = useState(false)
   const audioContext = useRef(details._autoplayContext || null)
   const audioElement = useRef(details._autoplayAudio || null)
   const primedPlaybackAdopted = useRef(false)
@@ -288,22 +289,63 @@ function BirthdayWish({ details, onEdit, onHome }) {
     if (details.music) startMelody()
   }
 
+  const showShareStatus = (message) => {
+    setShareStatus(message)
+    window.setTimeout(() => setShareStatus(''), 2600)
+  }
+
+  const copyText = async (text) => {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text)
+        return
+      } catch {
+        // Fall back to the older copy command when clipboard permission is unavailable.
+      }
+    }
+
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    textArea.style.position = 'fixed'
+    textArea.style.opacity = '0'
+    document.body.appendChild(textArea)
+    textArea.select()
+    const copied = document.execCommand('copy')
+    textArea.remove()
+    if (!copied) throw new Error('Copy failed')
+  }
+
+  const copyWishLink = async () => {
+    setShareBusy(true)
+    try {
+      const url = await createShareLink()
+      await copyText(url)
+      showShareStatus('Short wish link copied!')
+    } catch {
+      showShareStatus('Could not create the link. Please try again.')
+    } finally {
+      setShareBusy(false)
+    }
+  }
+
   const shareWish = async () => {
     const shareText = `Happy Birthday, ${details.name}! ${details.message}`
+    setShareBusy(true)
     try {
+      const url = await createShareLink()
       if (navigator.share) {
-        await navigator.share({ title: `A birthday wish for ${details.name}`, text: shareText })
-        setShareStatus('Wish shared!')
+        await navigator.share({ title: `A birthday wish for ${details.name}`, text: shareText, url })
+        showShareStatus('Wish shared!')
       } else {
-        await navigator.clipboard.writeText(shareText)
-        setShareStatus('Wish copied!')
+        await copyText(url)
+        showShareStatus('Short wish link copied!')
       }
-      window.setTimeout(() => setShareStatus(''), 2200)
     } catch (error) {
       if (error.name !== 'AbortError') {
-        setShareStatus('Sharing was not available')
-        window.setTimeout(() => setShareStatus(''), 2200)
+        showShareStatus('Sharing was not available')
       }
+    } finally {
+      setShareBusy(false)
     }
   }
 
@@ -347,7 +389,8 @@ function BirthdayWish({ details, onEdit, onHome }) {
               {musicOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
             </button>
           )}
-          <button type="button" className="share-link" onClick={shareWish}><Share2 size={15} /> Share wish</button>
+          <button type="button" className="copy-link" onClick={copyWishLink} disabled={shareBusy}><Copy size={15} /> {shareBusy ? 'Preparing...' : 'Copy link'}</button>
+          <button type="button" className="share-link" onClick={shareWish} disabled={shareBusy}><Share2 size={15} /> Share wish</button>
           <button type="button" className="edit-link" onClick={onEdit}><Pencil size={15} /> Edit wish</button>
         </div>
       </nav>
@@ -462,7 +505,7 @@ function BirthdayWish({ details, onEdit, onHome }) {
           <h2>Here’s to all the magic<br /><em>still to come.</em></h2>
           <p>Happy birthday, {details.name}. {profile.closing}</p>
           <div className="closing-actions">
-            <button className="button closing-share" type="button" onClick={shareWish}><Share2 size={17} /> Share this wish</button>
+            <button className="button closing-share" type="button" onClick={copyWishLink} disabled={shareBusy}><Copy size={17} /> {shareBusy ? 'Preparing link...' : 'Copy wish link'}</button>
             <button className="button closing-replay" type="button" onClick={replay}><Play size={15} fill="currentColor" /> Watch again</button>
           </div>
           <div className="closing-heart"><i /><Heart size={18} fill="currentColor" /><i /></div>

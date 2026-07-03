@@ -213,7 +213,7 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
         <button className="brand" type="button" onClick={onBack}>
           <span className="brand-mark"><Gift size={19} /></span> wishly<span>.</span>
         </button>
-        <span className="secure-note"><Heart size={14} /> Made privately in your browser</span>
+        <span className="secure-note"><Heart size={14} /> Private until you choose to share</span>
       </nav>
 
       <div className="form-shell shell">
@@ -361,7 +361,7 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
 
           {error && <p className="form-error" role="alert">{error}</p>}
           <button className="button button-primary submit-button" type="submit">Create their birthday magic <Sparkles size={18} /></button>
-          <p className="form-footnote">♡ Your details never leave this device.</p>
+          <p className="form-footnote">♡ Your details are only saved when you create a share link.</p>
         </form>
       </div>
     </div>

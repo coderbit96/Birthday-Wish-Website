@@ -27,7 +27,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
 .brand { border: 0; background: transparent; padding: 0; display: flex; align-items: center; gap: 8px; font: 400 25px var(--serif); cursor: pointer; letter-spacing: -.5px; }
 .brand > span:last-child { color: var(--pink); margin-left: -7px; }
 .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--pink); color: #fff; transform: rotate(-7deg); }
-.nav-cta, .edit-link, .share-link { border: 0; background: transparent; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 1px solid currentColor; padding: 6px 0; }
+.nav-cta, .edit-link, .share-link, .copy-link { border: 0; background: transparent; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 1px solid currentColor; padding: 6px 0; }
 .nav-cta { color: #a44256; }
 
 .hero { min-height: calc(100vh - 140px); padding: 60px 0 95px; display: grid; grid-template-columns: 1.03fr .97fr; align-items: center; gap: 82px; position: relative; }
@@ -227,6 +227,8 @@ textarea { resize: vertical; min-height: 115px; line-height: 1.6; }
 .icon-button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--accent) 35%, #ddd); background: rgba(255,255,255,.55); display: grid; place-items: center; color: var(--accent); cursor: pointer; }
 .edit-link { display: flex; align-items: center; gap: 6px; border-bottom: 0; }
 .share-link { display: flex; align-items: center; gap: 6px; color: color-mix(in srgb, var(--accent) 76%, #47313b); border-bottom: 0; }
+.copy-link { display: flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; color: #fff; background: var(--theme-ink, #4b373f); border: 0; border-radius: 999px; }
+.copy-link:disabled, .share-link:disabled, .closing-share:disabled { cursor: wait; opacity: .7; }
 .wish-layout { min-height: calc(100vh - 122px); display: grid; grid-template-columns: .95fr 1.05fr; align-items: center; gap: 70px; padding-top: 20px; padding-bottom: 60px; position: relative; z-index: 4; }
 .wish-copy { text-align: center; max-width: 610px; margin: auto; }
 .wish-kicker { color: color-mix(in srgb, var(--accent) 77%, #74384a); letter-spacing: 2.3px; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 12px; }
@@ -312,11 +314,14 @@ textarea { resize: vertical; min-height: 115px; line-height: 1.6; }
 .wish-footer { min-height: 46px; display: flex; justify-content: space-between; align-items: center; padding: 0 max(24px, calc((100vw - 1180px)/2)); border-top: 1px solid rgba(109, 75, 88, .12); font-size: 9px; color: #9c8990; position: relative; z-index: 12; }
 .wish-footer button { border: 0; background: transparent; color: inherit; display: flex; gap: 6px; align-items: center; cursor: pointer; }
 .share-toast { position: fixed; z-index: 70; right: 24px; bottom: 24px; background: #3f3036; color: white; border-radius: 3px; box-shadow: 0 15px 40px rgba(43, 27, 34, .3); padding: 12px 17px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 8px; animation: toastIn .3s ease both; }
+.wish-load-state { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 28px; text-align: center; color: #4d3740; background: radial-gradient(circle at 50% 35%, #fff 0, #f9e8ec 70%); font: 600 15px/1.6 Arial, sans-serif; }
+.wish-load-state > span { width: 38px; height: 38px; border: 3px solid rgba(158,53,75,.18); border-top-color: #9e354b; border-radius: 50%; animation: spin .75s linear infinite; }
+.wish-load-state h1 { margin: 0; font: 400 clamp(36px, 6vw, 64px)/1.05 Georgia, serif; }
+.wish-load-state p { margin: -7px 0 8px; color: #806872; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .confetti { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
 .confetti i { position: absolute; top: -25px; left: var(--left); width: 8px; height: 15px; background: var(--color); transform: rotate(var(--rotate)); animation: confettiFall var(--duration) var(--delay) ease-in both; }
-.balloons { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
-.balloon { position: absolute; bottom: -190px; left: 3%; width: 63px; height: 78px; border-radius: 52% 48% 47% 53%; background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.65), transparent 18%), var(--balloon); animation: balloonRise 9s var(--delay) ease-in infinite; opacity: .85; }
 .balloon::after { content: ''; position: absolute; bottom: -9px; left: 27px; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 0; border-top: 12px solid var(--balloon); }
 .balloon span { position: absolute; top: 87px; left: 31px; width: 1px; height: 105px; background: rgba(94, 71, 79, .35); }
 .balloon-2 { left: 18%; transform: scale(.7); }.balloon-3 { left: 42%; transform: scale(.85); }.balloon-4 { left: 68%; transform: scale(.65); }.balloon-5 { left: 84%; transform: scale(.9); }.balloon-6 { left: 94%; transform: scale(.72); }
@@ -433,6 +438,7 @@ textarea { resize: vertical; min-height: 115px; line-height: 1.6; }
 .wish-nav-actions { gap: 10px; }
 .icon-button,
 .share-link,
+.copy-link,
 .edit-link {
   min-height: 38px;
   padding: 0 14px;
@@ -443,6 +449,7 @@ textarea { resize: vertical; min-height: 115px; line-height: 1.6; }
   backdrop-filter: blur(10px);
 }
 .icon-button { width: 38px; padding: 0; color: var(--accent); }
+.wish-nav .copy-link { color: #fff; background: var(--theme-ink, #4b373f); border-color: transparent; }
 .wish-layout {
   min-height: calc(100vh - 84px);
   grid-template-columns: .82fr 1.18fr;
@@ -787,7 +794,6 @@ textarea { resize: vertical; min-height: 115px; line-height: 1.6; }
 @keyframes cakeBounce { 0%,100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-8px) rotate(-1deg); } }
 @keyframes flicker { from { transform: skewX(-5deg) scaleY(.96); } to { transform: skewX(7deg) scaleY(1.08); } }
 @keyframes confettiFall { 0% { translate: 0 -20px; opacity: 1; } 100% { translate: 80px 110vh; rotate: 720deg; opacity: .15; } }
-@keyframes balloonRise { 0% { translate: 0 0; rotate: -3deg; } 50% { translate: 22px -60vh; rotate: 5deg; } 100% { translate: -12px -125vh; rotate: -3deg; } }
 @keyframes countPop { 0% { opacity: 0; scale: .3; } 30%,70% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1.5; } }
 @keyframes wishPop { 0% { opacity: 0; scale: .6; } 40%,100% { opacity: 1; scale: 1; } }
 @keyframes introOut { to { opacity: 0; visibility: hidden; } }
@@ -899,7 +905,8 @@ textarea { resize: vertical; min-height: 115px; line-height: 1.6; }
   .uploaded-photo-grid { grid-template-columns: repeat(4, 1fr); }
   .wish-nav .brand { font-size: 0; }
   .wish-nav-actions { gap: 10px; }
-  .share-link { font-size: 0; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 30%, #ddd); border-radius: 50%; }
+  .share-link, .copy-link { font-size: 0; width: 34px; height: 34px; min-height: 34px; padding: 0; display: grid; place-items: center; border-radius: 50%; }
+  .share-link { border: 1px solid color-mix(in srgb, var(--accent) 30%, #ddd); }
   .edit-link { font-size: 0; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border: 1px solid #e3d4d0; border-radius: 50%; }
   .celebration-art { transform: scale(.62); margin: -110px 0 -130px; }
   .wish-actions { flex-direction: column; align-items: stretch; padding-inline: 20px; }
@@ -961,6 +968,7 @@ textarea { resize: vertical; min-height: 115px; line-height: 1.6; }
   .wish-nav-actions { flex: 0 0 auto; gap: 6px; }
   .wish-nav .icon-button,
   .wish-nav .share-link,
+  .wish-nav .copy-link,
   .wish-nav .edit-link {
     width: 34px;
     height: 34px;

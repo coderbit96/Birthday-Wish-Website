@@ -1,6 +1,6 @@
 # Wishly — Birthday Wish Creator
 
-A frontend-only React website for making personal, animated birthday wishes. It uses React state, plain JavaScript, and CSS animations—no backend or database.
+A React website for making personal, animated birthday wishes. Its tiny Node server stores each finished wish behind a private eight-character ID, so the complete page (including uploaded photos and music) can be opened from a short link.
 
 ## Run the project
 
@@ -15,6 +15,8 @@ A frontend-only React website for making personal, animated birthday wishes. It 
    ```
 4. Open the local URL shown in the terminal (usually `http://localhost:5173`).
 
+The copied link uses the current website address. Other people can open it after the app is deployed to a public Node host; a `localhost` link is only available on your own computer.
+
 ## Production build
 
 ```bash
@@ -23,6 +25,14 @@ npm run build
 
 Vite writes the deployable site to the `dist` folder.
 
+Run the production server with:
+
+```bash
+npm start
+```
+
+The host must keep the `.wish-data` directory as persistent storage so previously shared links continue to work.
+
 ## Component guide
 
 - `App.jsx` — controls the current page and wish data
@@ -30,7 +40,6 @@ Vite writes the deployable site to the `dist` folder.
 - `BirthdayForm.jsx` — name, relationship, image, message, color, and music form
 - `BirthdayWish.jsx` — generated celebration page and typewriter effect
 - `ConfettiAnimation.jsx` — CSS confetti pieces
-- `BalloonAnimation.jsx` — floating CSS balloons
 - `SurprisePopup.jsx` — funny birthday surprise modal
 
-Photo uploads stay in browser memory and are never sent anywhere.
+Photos and custom music stay in the browser until the creator presses **Copy link** or **Share wish**. At that point, the completed wish is saved on the same Wishly server so the recipient can open it.
