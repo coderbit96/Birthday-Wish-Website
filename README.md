@@ -15,7 +15,7 @@ A React website for making personal, animated birthday wishes. Its tiny Node ser
    ```
 4. Open the local URL shown in the terminal (usually `http://localhost:5173`).
 
-The copied link uses the current website address. On Vercel, wishes are saved to Vercel Blob so anyone with the public link can open the complete page. A `localhost` link remains available only on your own computer.
+Copying a link from either localhost or the deployed app saves the wish to Vercel Blob and returns a `birthday-wish-website-pi.vercel.app` URL, so anyone with the link can open the complete page.
 
 ## Production build
 
@@ -31,7 +31,7 @@ Run the production server with:
 npm start
 ```
 
-Local development stores wishes in `.wish-data`. The Vercel deployment requires a connected **public Vercel Blob store**, which automatically supplies `BLOB_READ_WRITE_TOKEN` to the API functions.
+The deployment requires a connected **public Vercel Blob store**, which automatically supplies `BLOB_READ_WRITE_TOKEN` to the API functions. Set `VITE_PUBLIC_SITE_URL` only if the production domain changes.
 
 ## Component guide
 

@@ -19,6 +19,7 @@ const starterWish = {
 
 const sharedWishId = window.location.hash.match(/^#wish=([A-Za-z0-9_-]{8})$/)?.[1] || ''
 const localHosts = new Set(['localhost', '127.0.0.1', '::1'])
+const publicSiteOrigin = (import.meta.env.VITE_PUBLIC_SITE_URL || 'https://birthday-wish-website-pi.vercel.app').replace(/\/$/, '')
 
 const makeWishId = () => {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'
@@ -82,43 +83,36 @@ function App() {
     let id = shareId
     if (!id) {
       const shareableWish = getShareableWish(wish)
-
-      if (localHosts.has(window.location.hostname)) {
-        const response = await fetch('/api/wishes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(shareableWish),
-        })
-
-        const isJson = response.headers.get('content-type')?.includes('application/json')
-        const result = isJson ? await response.json() : null
-        if (!response.ok) {
-          throw new Error(result?.error || 'The sharing server is unavailable. Restart Wishly with npm run dev.')
-        }
-        if (!result || !/^[A-Za-z0-9_-]{8}$/.test(result.id)) {
-          throw new Error('The sharing server is unavailable. Restart Wishly with npm run dev.')
-        }
-        id = result.id
-      } else {
-        const { upload } = await import('@vercel/blob/client')
-        id = makeWishId()
-        const pathname = `wishes/${id}.json`
-        const wishBlob = new Blob([JSON.stringify(shareableWish)], { type: 'application/json' })
-        const result = await upload(pathname, wishBlob, {
+      const sharingOrigin = localHosts.has(window.location.hostname) ? publicSiteOrigin : window.location.origin
+      const { upload } = await import('@vercel/blob/client')
+      id = makeWishId()
+      const pathname = `wishes/${id}.json`
+      const wishBlob = new Blob([JSON.stringify(shareableWish)], { type: 'application/json' })
+      let result
+      try {
+        result = await upload(pathname, wishBlob, {
           access: 'public',
-          handleUploadUrl: '/api/wishes/upload',
+          handleUploadUrl: `${sharingOrigin}/api/wishes/upload`,
           clientPayload: id,
           multipart: wishBlob.size > 4 * 1024 * 1024,
         })
-        if (result.pathname !== pathname) throw new Error('The public wish could not be saved. Please try again.')
+      } catch (error) {
+        if (/client token/i.test(error.message)) {
+          throw new Error('Public sharing needs a connected Vercel Blob store.')
+        }
+        throw error
       }
+      if (result.pathname !== pathname) throw new Error('The public wish could not be saved. Please try again.')
 
       setShareId(id)
     }
 
-    const url = new URL(import.meta.env.BASE_URL, window.location.origin)
+    const linkOrigin = localHosts.has(window.location.hostname) ? publicSiteOrigin : window.location.origin
+    const url = new URL(import.meta.env.BASE_URL, linkOrigin)
     url.hash = `wish=${id}`
-    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+    if (!localHosts.has(window.location.hostname)) {
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+    }
     return url.toString()
   }
 
