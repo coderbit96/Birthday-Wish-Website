@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Camera, Check, FileMusic, Gift, Heart, Image, Music2, Plus, Sparkles, Upload, Video, X } from 'lucide-react'
 import { colorThemes, getColorTheme } from '../themeOptions'
+import CopyrightMark from './CopyrightMark'
 
 const relationships = ['Love', 'Friend', 'Family', 'Sister', 'Brother', 'Wife', 'Husband']
 
@@ -364,6 +365,7 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
           <p className="form-footnote">♡ Your details are only saved when you create a share link.</p>
         </form>
       </div>
+      <footer className="site-copyright"><CopyrightMark /></footer>
     </div>
   )
 }

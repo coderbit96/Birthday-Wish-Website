@@ -3,6 +3,7 @@ import { ArrowDown, ArrowLeft, Check, Copy, ExternalLink, Gift, Heart, Pencil, P
 import ConfettiAnimation from './ConfettiAnimation'
 import SurprisePopup from './SurprisePopup'
 import { getColorTheme } from '../themeOptions'
+import CopyrightMark from './CopyrightMark'
 
 const themeProfiles = {
   Love: {
@@ -124,7 +125,7 @@ function getYouTubeVideoId(value) {
   }
 }
 
-function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
+function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebration }) {
   const [replayKey, setReplayKey] = useState(0)
   const [showSurprise, setShowSurprise] = useState(false)
   const [intro, setIntro] = useState(true)
@@ -287,6 +288,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
     setIntro(true)
     setTypedMessage('')
     setReplayKey((key) => key + 1)
+    onReplayCelebration()
     if (details.music) startMelody()
   }
 
@@ -296,10 +298,6 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
   }
 
   const copyText = async (text) => {
-    // Android clipboard services often reject very large self-contained wish URLs.
-    // In that case, keep the URL visible and use the native Share button instead.
-    if (text.length > 100000 && navigator.share) return false
-
     if (navigator.clipboard?.writeText) {
       try {
         await navigator.clipboard.writeText(text)
@@ -546,7 +544,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
         </div>
       </section>
 
-      <footer className="wish-footer"><button type="button" onClick={onHome}><ArrowLeft size={14} /> Make another wish</button><span>Made with love on Wishly ♡</span></footer>
+      <footer className="wish-footer"><button type="button" onClick={onHome}><ArrowLeft size={14} /> Make another wish</button><CopyrightMark /></footer>
       {generatedLink && (
         <aside className="share-result" aria-label="Your share link">
           <div className="share-result-heading"><span><Check size={15} /> Share link ready</span><button type="button" onClick={() => setGeneratedLink('')} aria-label="Close share link"><X size={15} /></button></div>

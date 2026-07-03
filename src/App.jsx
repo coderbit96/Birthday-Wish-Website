@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import Home from './components/Home'
 import BirthdayForm from './components/BirthdayForm'
 import BirthdayWish from './components/BirthdayWish'
+import CelebrationBackground from './components/CelebrationBackground'
+import CursorBackground from './components/CursorBackground'
+import { getColorTheme } from './themeOptions'
 
 const starterWish = {
   name: '',
@@ -47,6 +50,8 @@ function App() {
   const [shareId, setShareId] = useState(localHosts.has(window.location.hostname) ? '' : sharedWishId)
   const [shareLink, setShareLink] = useState('')
   const [loadError, setLoadError] = useState('')
+  const [celebrationKey, setCelebrationKey] = useState(0)
+  const celebrationTheme = getColorTheme(wish.color)
 
   useEffect(() => {
     if (!sharedWishId) return
@@ -80,6 +85,7 @@ function App() {
   const createWish = (details) => {
     clearSharedUrl()
     setWish(details)
+    setCelebrationKey((key) => key + 1)
     setScreen('wish')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -133,7 +139,18 @@ function App() {
   }
 
   return (
-    <main>
+    <main
+      style={{
+        '--theme-accent': celebrationTheme.accent,
+        '--theme-secondary': celebrationTheme.secondary,
+        '--theme-ink': celebrationTheme.ink,
+      }}
+    >
+      <CelebrationBackground
+        replayKey={`${screen}-${celebrationKey}`}
+        palette={[celebrationTheme.accent, celebrationTheme.secondary, '#efc46b', celebrationTheme.ink]}
+      />
+      <CursorBackground />
       {screen === 'loading' && <div className="wish-load-state"><span />Opening your birthday wish...</div>}
       {screen === 'error' && (
         <div className="wish-load-state wish-load-error">
@@ -142,7 +159,7 @@ function App() {
           <button className="button button-primary" type="button" onClick={goHome}>Make a new wish</button>
         </div>
       )}
-      {screen === 'home' && <Home onCreate={() => setScreen('form')} />}
+      {screen === 'home' && <Home onCreate={() => { setCelebrationKey((key) => key + 1); setScreen('form') }} />}
       {screen === 'form' && (
         <BirthdayForm
           initialValues={wish}
@@ -156,6 +173,7 @@ function App() {
           onEdit={editWish}
           onHome={goHome}
           createShareLink={createShareLink}
+          onReplayCelebration={() => setCelebrationKey((key) => key + 1)}
         />
       )}
     </main>

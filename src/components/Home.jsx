@@ -1,4 +1,5 @@
 import { ArrowRight, Gift, Heart, PartyPopper, Sparkles } from 'lucide-react'
+import CopyrightMark from './CopyrightMark'
 
 function Home({ onCreate }) {
   return (
@@ -59,6 +60,7 @@ function Home({ onCreate }) {
           <div><span>03</span><p><strong>Make their day</strong>Reveal a celebration made just for them.</p></div>
         </div>
       </section>
+      <footer className="site-copyright"><CopyrightMark /></footer>
     </div>
   )
 }
