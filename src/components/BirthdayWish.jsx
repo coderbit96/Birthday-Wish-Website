@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowLeft, Check, Copy, Gift, Heart, Pencil, Play, Share2, Sparkles, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDown, ArrowLeft, Check, Copy, ExternalLink, Gift, Heart, Pencil, Play, Share2, Sparkles, Volume2, VolumeX, X } from 'lucide-react'
 import ConfettiAnimation from './ConfettiAnimation'
 import SurprisePopup from './SurprisePopup'
 import { getColorTheme } from '../themeOptions'
@@ -132,6 +132,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
   const [musicOn, setMusicOn] = useState(false)
   const [shareStatus, setShareStatus] = useState('')
   const [shareBusy, setShareBusy] = useState(false)
+  const [generatedLink, setGeneratedLink] = useState('')
   const audioContext = useRef(details._autoplayContext || null)
   const audioElement = useRef(details._autoplayAudio || null)
   const primedPlaybackAdopted = useRef(false)
@@ -319,6 +320,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
     setShareBusy(true)
     try {
       const url = await createShareLink()
+      setGeneratedLink(url)
       await copyText(url)
       showShareStatus('Short wish link copied!')
     } catch (error) {
@@ -333,6 +335,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
     setShareBusy(true)
     try {
       const url = await createShareLink()
+      setGeneratedLink(url)
       if (navigator.share) {
         await navigator.share({ title: `A birthday wish for ${details.name}`, text: shareText, url })
         showShareStatus('Wish shared!')
@@ -513,6 +516,16 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink }) {
       </section>
 
       <footer className="wish-footer"><button type="button" onClick={onHome}><ArrowLeft size={14} /> Make another wish</button><span>Made with love on Wishly ♡</span></footer>
+      {generatedLink && (
+        <aside className="share-result" aria-label="Your share link">
+          <div className="share-result-heading"><span><Check size={15} /> Share link ready</span><button type="button" onClick={() => setGeneratedLink('')} aria-label="Close share link"><X size={15} /></button></div>
+          <div className="share-result-row">
+            <input value={generatedLink} readOnly onFocus={(event) => event.target.select()} aria-label="Generated wish link" />
+            <button type="button" onClick={() => copyText(generatedLink).then(() => showShareStatus('Wish link copied!'))}><Copy size={15} /> Copy</button>
+            <a href={generatedLink} target="_blank" rel="noreferrer" aria-label="Open wish link"><ExternalLink size={15} /></a>
+          </div>
+        </aside>
+      )}
       {shareStatus && <div className="share-toast" role="status"><Check size={15} /> {shareStatus}</div>}
       {showSurprise && <SurprisePopup name={details.name} relationship={details.relationship} onClose={() => setShowSurprise(false)} />}
     </div>
