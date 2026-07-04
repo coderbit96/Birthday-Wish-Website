@@ -8,6 +8,9 @@ import { getColorTheme } from './themeOptions'
 
 const starterWish = {
   name: '',
+  age: '',
+  fromName: '',
+  birthdayDate: '',
   relationship: 'Love',
   image: '',
   images: [],
@@ -32,6 +35,9 @@ const makeWishId = () => {
 
 const getShareableWish = (wish) => ({
   name: wish.name,
+  age: wish.age,
+  fromName: wish.fromName,
+  birthdayDate: wish.birthdayDate,
   relationship: wish.relationship,
   image: wish.image,
   images: wish.images,

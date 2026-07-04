@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Camera, Check, FileMusic, Gift, Heart, Image, Music2, Plus, Sparkles, Upload, Video, X } from 'lucide-react'
+import { ArrowLeft, Camera, Check, FileMusic, Gift, Heart, Image, Music2, Plus, Sparkles, Upload, Video, X } from 'lucide-react'
 import { colorThemes, getColorTheme } from '../themeOptions'
 import CopyrightMark from './CopyrightMark'
 
@@ -20,6 +20,13 @@ const themeLabels = {
   Sister: 'Sisterhood glow theme', Brother: 'Brotherhood legacy theme', Wife: 'Elegant devotion theme', Husband: 'Steady adventure theme',
 }
 
+const readImageInOrder = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => resolve(reader.result)
+  reader.onerror = () => reject(new Error(`Could not read ${file.name}`))
+  reader.readAsDataURL(file)
+})
+
 function BirthdayForm({ initialValues, onSubmit, onBack }) {
   const [form, setForm] = useState(() => {
     const images = initialValues.images?.length
@@ -30,6 +37,9 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
 
     return {
       ...initialValues,
+      age: initialValues.age || '',
+      fromName: initialValues.fromName || '',
+      birthdayDate: initialValues.birthdayDate || '',
       image: images[0] || '',
       images,
       musicType: initialValues.musicType || 'birthday',
@@ -44,10 +54,13 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
   const fileInput = useRef(null)
   const audioInput = useRef(null)
   const selectedColorTheme = getColorTheme(form.color)
+  const formattedBirthdayDate = form.birthdayDate
+    ? new Date(`${form.birthdayDate}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
+    : ''
   const progressSteps = [
-    { label: 'Their details', complete: Boolean(form.name.trim()) },
+    { label: 'Their details', complete: Boolean(form.name.trim() && form.age) },
     { label: 'A photo', complete: form.images.some((image) => Boolean(String(image).trim())) },
-    { label: 'Your message', complete: form.message.trim().length >= 20 },
+    { label: 'Your message', complete: form.message.trim().length >= 20 && form.fromName.trim() },
     { label: 'Their style', complete: Boolean(form.relationship && form.color) },
   ]
   const completion = Math.round((progressSteps.filter((step) => step.complete).length / progressSteps.length) * 100)
@@ -73,12 +86,17 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
       return
     }
 
-    const uploadedImages = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })))
+    const uploadedImages = []
+    try {
+      for (const file of files) {
+        // Read one at a time so the gallery order can never change with file size or read speed.
+        uploadedImages.push(await readImageInOrder(file))
+      }
+    } catch (uploadError) {
+      setError(uploadError.message || 'One of these photos could not be read.')
+      event.target.value = ''
+      return
+    }
 
     setForm((current) => {
       const images = [...current.images, ...uploadedImages].slice(0, 12)
@@ -145,12 +163,21 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
       setError('Add their name to make this wish personal.')
       return
     }
+    const age = Number.parseInt(form.age, 10)
+    if (!Number.isInteger(age) || age < 1 || age > 130) {
+      setError('Add their age between 1 and 130.')
+      return
+    }
     if (!form.images.some((image) => Boolean(String(image).trim()))) {
       setError('Add at least one favorite photo to create their birthday wish.')
       return
     }
     if (!form.message.trim()) {
       setError('Write a few words from the heart.')
+      return
+    }
+    if (!form.fromName.trim()) {
+      setError('Add your name so they know who made this wish.')
       return
     }
     if (form.music && form.musicType === 'link') {
@@ -194,6 +221,8 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
       image: form.images[0] || '',
       images: form.images,
       name: form.name.trim(),
+      age,
+      fromName: form.fromName.trim(),
       message: form.message.trim(),
     })
   }
@@ -232,6 +261,10 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
                 <strong>{form.name.trim() || 'someone special'}</strong>
               </p>
             </div>
+            <div className="live-preview-details">
+              <span>{form.age ? `Turning ${form.age}` : 'Add their age'}</span>
+              {formattedBirthdayDate && <><i /><span>{formattedBirthdayDate}</span></>}
+            </div>
             <div className="live-preview-theme"><span>{form.relationship}</span><i /><span>{selectedColorTheme.label}</span></div>
           </div>
           <div className="form-promise">
@@ -266,6 +299,17 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
           <label className="field-label" htmlFor="person-name">What’s their name? <span>*</span></label>
           <input id="person-name" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="e.g. Ananya" />
 
+          <div className="form-detail-grid">
+            <div>
+              <label className="field-label" htmlFor="person-age">How old are they turning? <span>*</span></label>
+              <input id="person-age" type="number" min="1" max="130" inputMode="numeric" value={form.age} onChange={(e) => update('age', e.target.value)} placeholder="e.g. 25" />
+            </div>
+            <div>
+              <label className="field-label" htmlFor="birthday-date">Birthday date <small>(optional)</small></label>
+              <input id="birthday-date" type="date" value={form.birthdayDate} onChange={(e) => update('birthdayDate', e.target.value)} />
+            </div>
+          </div>
+
           <fieldset>
             <legend>Who are they to you?</legend>
             <div className="relationship-grid">
@@ -295,15 +339,21 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
                   <input ref={fileInput} type="file" accept="image/*" multiple onChange={uploadImages} hidden />
                 </button>
                 {form.images.length > 0 && (
-                  <div className="uploaded-photo-grid" aria-label="Selected photos">
-                    {form.images.map((photo, index) => (
-                      <figure className="uploaded-photo" key={`${photo.slice(0, 36)}-${index}`}>
-                        <img src={photo} alt={`Selected photo ${index + 1}`} />
-                        <span>{index + 1}</span>
-                        <button type="button" onClick={() => removeImage(index)} aria-label={`Remove photo ${index + 1}`}><X size={13} /></button>
-                      </figure>
-                    ))}
-                  </div>
+                  <>
+                    <div className="uploaded-photo-grid" aria-label="Selected photos in gallery order">
+                      {form.images.map((photo, index) => (
+                        <figure className="uploaded-photo" key={`${photo.slice(0, 36)}-${index}`}>
+                          <img src={photo} alt={`Selected photo ${index + 1}`} />
+                          <span>{index + 1}</span>
+                          <button type="button" onClick={() => removeImage(index)} aria-label={`Remove photo ${index + 1}`}><X size={13} /></button>
+                        </figure>
+                      ))}
+                    </div>
+                    <p className="upload-order-note">
+                      <strong>Photo 1 is featured.</strong>{' '}
+                      {form.images.length > 1 ? `Photos 2–${form.images.length} follow in this exact gallery order.` : 'Add more photos to build the gallery in order.'}
+                    </p>
+                  </>
                 )}
               </div>
             ) : (
@@ -314,6 +364,9 @@ function BirthdayForm({ initialValues, onSubmit, onBack }) {
           <label className="field-label" htmlFor="birthday-message">Your birthday message <span>*</span></label>
           <textarea id="birthday-message" value={form.message} onChange={(e) => update('message', e.target.value)} rows="5" maxLength="320" placeholder="Write something from the heart..." />
           <div className="character-count"><span style={{ width: `${Math.min(100, form.message.length / 3.2)}%` }} /> {form.message.length}/320</div>
+
+          <label className="field-label" htmlFor="sender-name">Your name <span>*</span></label>
+          <input id="sender-name" value={form.fromName} onChange={(e) => update('fromName', e.target.value)} placeholder="e.g. Joydip" />
 
           <div className="form-options">
             <fieldset>

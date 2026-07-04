@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowLeft, Check, Copy, ExternalLink, Gift, Heart, Pencil, Play, Share2, Sparkles, Volume2, VolumeX, X } from 'lucide-react'
+import { ArrowDown, ArrowLeft, Check, Copy, ExternalLink, Gift, Heart, MessageCircle, Pencil, Play, Share2, Sparkles, Volume2, VolumeX, X } from 'lucide-react'
 import ConfettiAnimation from './ConfettiAnimation'
 import SurprisePopup from './SurprisePopup'
 import { getColorTheme } from '../themeOptions'
@@ -142,8 +142,13 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
   const theme = profile.id
   const highlights = highlightsByTheme[theme]
   const colorTheme = getColorTheme(details.color)
+  const formattedBirthdayDate = details.birthdayDate
+    ? new Date(`${details.birthdayDate}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
+    : ''
   const photos = details.images?.length ? details.images : details.image ? [details.image] : []
-  const sceneImage = photos[0] || '/default-photo-realistic.png'
+  const featuredPhoto = photos[0] || ''
+  const galleryPhotos = photos.slice(1)
+  const sceneImage = featuredPhoto || '/default-photo-realistic.png'
   const customMusicSelected = details.musicType === 'custom' && details.musicSrc
   const linkedMusicSelected = details.musicType === 'link' && details.musicUrl
   const youtubeVideoId = linkedMusicSelected ? getYouTubeVideoId(details.musicUrl) : ''
@@ -361,7 +366,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
   }
 
   const shareWish = async () => {
-    const shareText = `Happy Birthday, ${details.name}! ${details.message}`
+    const shareText = `Happy Birthday, ${details.name}! ${details.message}${details.fromName ? ` — From ${details.fromName}` : ''}`
     setShareBusy(true)
     try {
       const url = await createShareLink()
@@ -376,6 +381,31 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
       if (error.name !== 'AbortError') {
         showShareStatus(error.message || 'Sharing was not available')
       }
+    } finally {
+      setShareBusy(false)
+    }
+  }
+
+  const shareOnWhatsApp = async (url = generatedLink) => {
+    const whatsappWindow = window.open('about:blank', 'birthday-wish-whatsapp')
+    if (whatsappWindow) whatsappWindow.opener = null
+
+    setShareBusy(true)
+    try {
+      const wishUrl = url || await createShareLink()
+      setGeneratedLink(wishUrl)
+      const shareText = `Happy Birthday, ${details.name}! ${details.message}${details.fromName ? ` — From ${details.fromName}` : ''}\n\nOpen your birthday surprise: ${wishUrl}`
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
+
+      if (whatsappWindow) {
+        whatsappWindow.location.href = whatsappUrl
+      } else {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+      }
+      showShareStatus('Opening WhatsApp...')
+    } catch (error) {
+      whatsappWindow?.close()
+      showShareStatus(error.message || 'Could not open WhatsApp. Please try again.')
     } finally {
       setShareBusy(false)
     }
@@ -417,11 +447,13 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
         <button className="brand wish-brand" type="button" onClick={onHome}><span className="brand-mark"><Gift size={19} /></span> wishly<span>.</span></button>
         <div className="wish-nav-actions">
           {details.music && (
-            <button type="button" className="icon-button" onClick={musicOn ? stopMelody : startMelody} aria-label={musicOn ? `Turn ${selectedMusicLabel} off` : `Play ${selectedMusicLabel}`} title={selectedMusicLabel}>
+            <button type="button" className={linkedMusicSelected ? 'icon-button music-url-button' : 'icon-button'} onClick={musicOn ? stopMelody : startMelody} aria-label={musicOn ? `Turn ${selectedMusicLabel} off` : `Play ${selectedMusicLabel}`} title={selectedMusicLabel}>
               {musicOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              {linkedMusicSelected && <span>{musicOn ? 'Pause music' : 'Play music'}</span>}
             </button>
           )}
           <button type="button" className="copy-link" onClick={copyWishLink} disabled={shareBusy}><Copy size={15} /> {shareBusy ? 'Preparing...' : 'Copy link'}</button>
+          <button type="button" className="whatsapp-link" onClick={() => shareOnWhatsApp()} disabled={shareBusy}><MessageCircle size={15} /> WhatsApp</button>
           <button type="button" className="share-link" onClick={shareWish} disabled={shareBusy}><Share2 size={15} /> Share wish</button>
           <button type="button" className="edit-link" onClick={onEdit}><Pencil size={15} /> Edit wish</button>
         </div>
@@ -431,9 +463,20 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
         <section className="wish-copy">
           <div className="wish-kicker"><span /> {profile.kicker} <span /></div>
           <p className="wish-script">Happy Birthday</p>
-          <h1>{details.name}<em>!</em></h1>
+          <h1 aria-label={`Happy Birthday ${details.name}`}>{details.name}<em>!</em></h1>
+          {(details.age || formattedBirthdayDate) && (
+            <div className="wish-personal-details">
+              {details.age && <span>Celebrating {details.age} wonderful years</span>}
+              {details.age && formattedBirthdayDate && <i />}
+              {formattedBirthdayDate && <span>{formattedBirthdayDate}</span>}
+            </div>
+          )}
           <div className="heart-rule"><i /><Heart size={17} fill="currentColor" /><i /></div>
-          <p className="typed-message">“{typedMessage}<span className="typing-caret" />”</p>
+          <div className="wish-message-card">
+            <Heart className="message-card-heart" size={16} fill="currentColor" aria-hidden="true" />
+            <p className="typed-message">“{typedMessage}<span className="typing-caret" />”</p>
+            <p className="wish-from">From: <strong>{details.fromName || 'Someone who loves you'}</strong></p>
+          </div>
           <p className="relationship-note">{profile.note}</p>
           <div className="wish-actions">
             <button className="button button-primary" type="button" onClick={() => setShowSurprise(true)} data-testid="surprise-button">Click for a surprise <Sparkles size={17} /></button>
@@ -460,7 +503,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
                 className="scene-photo"
                 key={`photo-${sceneImage.slice(0, 28)}`}
                 src={sceneImage}
-                alt={photos.length ? `${details.name}'s featured birthday photo` : 'Birthday portrait'}
+                alt={featuredPhoto ? `${details.name}'s featured birthday photo` : 'Birthday portrait'}
                 onError={(event) => {
                   if (!event.currentTarget.src.endsWith('/default-photo-realistic.png')) {
                     event.currentTarget.src = '/default-photo-realistic.png'
@@ -470,14 +513,24 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
             </div>
           </div>
           <div className="scene-lights" aria-hidden="true"><i /><i /><i /></div>
+          <div className="wish-floating-hearts" aria-hidden="true">
+            {Array.from({ length: 6 }, (_, index) => <span key={index} style={{ '--heart-index': index }}>♥</span>)}
+          </div>
+          <div className="animated-cake" aria-label="Animated birthday cake" role="img">
+            <span className="cake-flame" />
+            <span className="cake-candle" />
+            <span className="cake-icing"><i /><i /><i /></span>
+            <span className="cake-layer"><b>♡</b></span>
+            <span className="cake-plate" />
+          </div>
           <div className="scene-shade" />
           <div className="scene-label"><span>YOUR DAY</span><strong>{profile.scene}</strong></div>
-          <div className="scene-credit"><i /> WITH ALL MY LOVE</div>
+          <div className="scene-credit"><i /> {details.fromName ? `WITH LOVE, ${details.fromName.toUpperCase()}` : 'WITH ALL MY LOVE'}</div>
         </section>
         <a className="scroll-invitation" href="#birthday-blessings"><span>THERE’S MORE FOR YOU</span><ArrowDown size={14} /></a>
       </div>
 
-      {photos.length > 1 && (
+      {galleryPhotos.length > 0 && (
         <section className="memories-section" aria-labelledby="memories-title">
           <div className="memories-heading shell">
             <div className="eyebrow"><Sparkles size={14} /> MOMENTS WORTH KEEPING</div>
@@ -485,7 +538,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
             <p>Every picture holds a piece of the story.</p>
           </div>
           <div className="memories-grid shell">
-            {photos.slice(1).map((photo, index) => (
+            {galleryPhotos.map((photo, index) => (
               <figure className="memory-card" key={`${photo.slice(0, 36)}-${index}`}>
                 <img src={photo} alt={`${details.name}'s memory ${index + 1}`} loading="lazy" />
                 <figcaption><span>MEMORY</span><strong>{String(index + 1).padStart(2, '0')}</strong></figcaption>
@@ -513,19 +566,13 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
           ))}
         </div>
 
-        <div className={photos.length ? 'keepsake-note shell' : 'keepsake-note no-photo shell'}>
+        <div className="keepsake-note no-photo shell">
           <div className="note-decoration" aria-hidden="true"><span>✦</span><span>♡</span></div>
-          {photos.length > 0 && (
-            <div className="note-photo">
-              <img src={photos[0]} alt="" onError={(event) => { event.currentTarget.closest('.note-photo').style.display = 'none' }} />
-              <span>favorite human</span>
-            </div>
-          )}
           <div className="note-copy">
             <p className="note-overline">A LITTLE NOTE TO KEEP</p>
             <blockquote>“{profile.keepsake}”</blockquote>
             <p>Never forget how many ordinary days you make brighter just by being yourself, {details.name}.</p>
-            <span className="note-signature">Always cheering for you ♡</span>
+            <span className="note-signature">{details.fromName ? `With love, ${details.fromName}` : 'Always cheering for you'} ♡</span>
           </div>
         </div>
       </section>
@@ -551,6 +598,7 @@ function BirthdayWish({ details, onEdit, onHome, createShareLink, onReplayCelebr
           <div className="share-result-row">
             <input value={generatedLink} readOnly onFocus={(event) => event.target.select()} aria-label="Generated wish link" />
             <button type="button" onClick={() => copyGeneratedLink()}><Copy size={15} /> Copy</button>
+            <button className="whatsapp-now" type="button" onClick={() => shareOnWhatsApp()}><MessageCircle size={15} /> WhatsApp</button>
             <button className="share-now" type="button" onClick={() => shareGeneratedLink()}><Share2 size={15} /> Share</button>
             <a href={generatedLink} target="_blank" rel="noreferrer" aria-label="Open wish link"><ExternalLink size={15} /></a>
           </div>

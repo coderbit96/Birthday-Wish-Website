@@ -37,9 +37,9 @@ The deployment requires a connected **public Vercel Blob store**, which automati
 
 - `App.jsx` — controls the current page and wish data
 - `Home.jsx` — landing page
-- `BirthdayForm.jsx` — name, relationship, image, message, color, and music form
-- `BirthdayWish.jsx` — generated celebration page and typewriter effect
+- `BirthdayForm.jsx` — recipient name, age, birthday date, sender, ordered photos, message, theme, and music form
+- `BirthdayWish.jsx` — generated celebration page, featured first photo, remaining-photo gallery, music, and animated effects
 - `ConfettiAnimation.jsx` — CSS confetti pieces
 - `SurprisePopup.jsx` — funny birthday surprise modal
 
-Photos and custom music stay in the browser until the creator presses **Copy link** or **Share wish**. The completed wish is then saved to the connected Vercel Blob store so the recipient can open it.
+Photos and custom music stay in the browser until the creator presses **Copy link** or **Share wish**. The first selected photo is featured on the wish and later photos retain their order in the gallery. The completed wish is then saved to the connected Vercel Blob store so the recipient can open it.
